@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons CDN -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen p-4 sm:p-8">
+
+    <!-- ===== VIDEO BACKGROUND START ===== -->
+    <div id="video-overlay"></div>
+    <video autoplay muted loop id="bg-video">
+        <!-- ZAROORI: Sunishchit karein ki video 'videos/background.mp4' par maujood hai -->
+        <source src="background.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <!-- [VIDEO UPDATE] is wrapper par z-index lagaya gaya hai CSS mein -->
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <!-- Brand + search cluster -->
+            <div class="flex flex-col gap-3 w-full sm:w-auto">
+                <!-- Brand & quick summary -->
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-500 shadow-lg shadow-sky-500/40 text-2xl">
+                            ⛅
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold uppercase tracking-[0.17em] text-sky-300/80">Aurora Weather</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search row -->
+                <div class="flex gap-2 w-full">
+                    <div class="relative flex-1 sm:w-64">
+                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+                    <input
+                        id="city-search"
+                        type="text"
+                        placeholder="Search city..."
+                        class="bg-zinc-900 border border-zinc-800 rounded-lg pl-12 pr-4 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                    >
+                    <div id="search-error" class="absolute top-full left-0 mt-1 text-red-400 text-xs hidden"></div>
+                </div>
+                    <button id="current-location-btn" class="bg-zinc-800/90 text-zinc-100 px-4 py-2.5 rounded-lg hover:bg-zinc-700/90 transition-colors flex items-center gap-2 shadow-sm shadow-black/40">
+                        <span class="text-lg">📍</span>
+                        <span>Use my location</span>
+                    </button>
+                </div>
+                <div id="location-error" class="text-red-400 text-xs"></div>
+            </div>
+
+            <!-- Controls cluster -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-zinc-400 text-sm flex items-center gap-1">
+                        <span>Thermal feel</span>
+                        <span class="text-base">🌡️</span>
+                    </span>
+                    <button id="celsius-btn" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">°C</button>
+                    <button id="fahrenheit-btn" class="bg-zinc-700 text-zinc-200 px-3 py-1 rounded text-sm hover:bg-zinc-600">°F</button>
+                </div>
+                <!-- Support Project removed -->
+            </div>
+        </header>
+
+        <!-- Main Weather Grid -->
+        <main class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <!-- Left Column -->
+            <section class="lg:col-span-1 flex flex-col gap-6">
+                <!-- Current Weather -->
+                <div class="card current-card">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                            <p id="current-date" class="text-zinc-400 text-xs uppercase tracking-[0.18em]">Sunday</p>
+                            <p id="current-time" class="text-zinc-300 text-sm mb-1">12:39 PM</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <h2 id="city-name" class="text-2xl font-semibold text-white tracking-tight">Copenhagen</h2>
+                        <i class="ph ph-map-pin text-zinc-400"></i>
+                        <button id="favorite-btn" class="ml-1 inline-flex items-center justify-center h-8 w-8 rounded-full bg-zinc-900/70 text-zinc-400 hover:text-red-500 hover:bg-zinc-800/90 transition-colors shadow-sm shadow-black/40">
+                            <i class="ph ph-heart text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-end justify-between gap-4 mb-4">
+                        <div>
+                            <div id="temp" class="text-7xl sm:text-8xl font-bold text-white mb-2 leading-none">
+                                10°
+                            </div>
+                            <div class="flex items-center gap-2 text-zinc-200 mb-1">
+                                <span id="weather-emoji" class="text-3xl">☁️</span>
+                                <i id="weather-icon" class="ph ph-cloud-rain text-2xl"></i>
+                                <p id="weather-desc" class="text-sm sm:text-base">Rain</p>
+                            </div>
+                            <p id="temp-range" class="text-zinc-400 text-xs sm:text-sm">H: 11° L: 10°</p>
+                        </div>
+                        <div class="hidden sm:flex flex-col items-end gap-1 text-xs text-zinc-400">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10-Day Forecast (improved) -->
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="text-lg">📅</span>
+                            <span>10-Day Forecast</span>
+                        </h3>
+                        <div class="flex flex-col items-end text-xs text-zinc-400">
+                            <span>Tap a day to view details</span>
+                            <span class="flex items-center gap-1 mt-1">
+                                <span class="h-1.5 w-6 rounded-full bg-gradient-to-r from-sky-400 via-amber-300 to-rose-400"></span>
+                                <span>temp trend</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="ten-day-list" class="flex gap-3 overflow-x-auto pb-2">
+                        <!-- Day cards injected here by JS -->
+                    </div>
+
+                    <div id="day-detail" class="mt-4 bg-zinc-900 border border-zinc-800 p-3 rounded-lg hidden">
+                        <!-- Selected day detail injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Middle Column (Main Content) -->
+            <section class="lg:col-span-2 flex flex-col gap-6">
+                <!-- Air Pollution -->
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="text-xl">🌫️</span>
+                            <span>Air Quality</span>
+                        </h3>
+                        <span id="aqi-badge" class="bg-green-600 text-white text-xs px-2 py-1 rounded">Good</span>
+                    </div>
+                    <div class="gradient-bar mb-3"></div>
+                    <p id="aqi-desc" class="text-zinc-200 mb-4">Air quality is good</p>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-zinc-400">CO</p>
+                            <p id="co-level" class="text-white font-semibold">0.3 ppm</p>
+                        </div>
+                        <div>
+                            <p class="text-zinc-400">NO₂</p>
+                            <p id="no2-level" class="text-white font-semibold">5.2 µg/m³</p>
+                        </div>
+                        <div>
+                            <p class="text-zinc-400">O₃</p>
+                            <p id="o3-level" class="text-white font-semibold">25.1 µg/m³</p>
+                        </div>
+                        <div>
+                            <p class="text-zinc-400">SO₂</p>
+                            <p id="so2-level" class="text-white font-semibold">1.8 µg/m³</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hourly Forecast -->
+                <div class="card-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="text-lg">🕒</span>
+                            <span>Hourly Forecast</span>
+                        </h3>
+                    </div>
+                    <div id="hourly-forecast" class="grid grid-cols-6 divide-x divide-zinc-800">
+                        <!-- Hourly data will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Today's Weather Overview -->
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="text-lg">📊</span>
+                            <span>Today's Weather</span>
+                        </h3>
+                    </div>
+                    <div id="today-overview" class="grid grid-cols-4 gap-4">
+                        <!-- Hourly updates will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Temperature Trend Chart -->
+                <div class="card-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="text-lg">📈</span>
+                            <span>Temperature Trend</span>
+                        </h3>
+                        <p class="text-[11px] text-zinc-400">Next 12 forecast points • every 3 hours</p>
+                    </div>
+                    <div class="temp-chart-shell">
+                        <canvas id="temp-chart"></canvas>
+                        <div class="mt-1 flex items-center justify-between text-[10px] text-zinc-300/80 px-1">
+                            <span id="temp-chart-min">Min: —</span>
+                            <span id="temp-chart-mid">Now →</span>
+                            <span id="temp-chart-max">Max: —</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Widgets Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card-sm">
+                        <p class="text-zinc-400 text-sm mb-2">Feels like</p>
+                        <p id="feels-like" class="text-white text-3xl font-semibold mb-2">7°</p>
+                        <p id="feels-desc" class="text-zinc-400 text-sm">Feels colder than the actual temperature.</p>
+                    </div>
+                    <div class="card-sm">
+                        <p class="text-zinc-400 text-sm mb-2">Humidity</p>
+                        <p id="humidity" class="text-white text-3xl font-semibold mb-2">74%</p>
+                        <p id="humidity-desc" class="text-zinc-400 text-sm">High humidity. It might feel humid and uncomfortable.</p>
+                    </div>
+                    <div class="card-sm">
+                        <p class="text-zinc-400 text-sm mb-2">Visibility</p>
+                        <p id="visibility" class="text-white text-3xl font-semibold mb-2">10 km</p>
+                        <p id="visibility-desc" class="text-zinc-400 text-sm">It's perfectly clear right now.</p>
+                    </div>
+                    <div class="card-sm">
+                        <p class="text-zinc-400 text-sm mb-2">Pressure</p>
+                        <p id="pressure" class="text-white text-3xl font-semibold mb-2">994 hPa</p>
+                        <p id="pressure-desc" class="text-zinc-400 text-sm">Low pressure. Expect changes in the weather.</p>
+                    </div>
+                </div>
+
+                <!-- Map removed as requested -->
+
+            </section>
+
+            <!-- Right Column -->
+            <section class="lg:col-span-1 flex flex-col gap-6">
+                <!-- Mood & Outfit coach -->
+                <div class="card-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="text-xl">🌈</span>
+                            <span>Mood & Outfit</span>
+                        </h3>
+                        <span id="mood-emoji" class="text-2xl">😌</span>
+                    </div>
+                    <p id="mood-title" class="text-zinc-200 text-sm font-medium mb-1">Soft, cozy weather</p>
+                    <p id="mood-text" class="text-zinc-400 text-sm mb-3">
+                        Great for a relaxed walk, coffee run or light errands outside.
+                    </p>
+                    <div class="rounded-lg bg-zinc-900/80 border border-zinc-800 px-3 py-2 text-xs text-zinc-300 flex items-start gap-2">
+                        <span class="mt-0.5 text-lg">🧥</span>
+                        <p id="outfit-text">
+                            Light jacket, breathable layers and comfy sneakers recommended.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sunset -->
+                <div class="card-sm">
+                    <p class="text-zinc-400 text-sm mb-2 flex items-center gap-2">
+                        <span>Golden hour</span>
+                        <span class="text-lg">🌅</span>
+                    </p>
+                    <p class="text-white text-3xl font-semibold mb-2">4:38 PM</p>
+                    <p class="text-zinc-400 text-sm">Sunrise: 7:08 AM</p>
+                </div>
+                <!-- Wind -->
+                <div class="card-sm">
+                    <p class="text-zinc-400 text-sm mb-2">Wind Details</p>
+                    <!-- Enhanced compass -->
+                    <div class="relative w-32 h-32 mx-auto mb-4">
+                        <div class="absolute inset-0 border-2 border-zinc-700 rounded-full"></div>
+                        <div id="compass-n" class="absolute left-1/2 -translate-x-1/2 top-2 text-xs font-bold text-zinc-300">N</div>
+                        <div id="compass-s" class="absolute left-1/2 -translate-x-1/2 bottom-2 text-xs text-zinc-500">S</div>
+                        <div id="compass-w" class="absolute top-1/2 -translate-y-1/2 left-2 text-xs text-zinc-500">W</div>
+                        <div id="compass-e" class="absolute top-1/2 -translate-y-1/2 right-2 text-xs text-zinc-500">E</div>
+                        <!-- Wind Arrow -->
+                        <div id="wind-arrow" class="absolute inset-0 flex justify-center items-center transform">
+                            <i class="ph ph-navigation-arrow-fill text-3xl text-white"></i>
+                        </div>
+                    </div>
+                    <div class="text-center mb-2">
+                        <p class="text-white font-semibold text-lg"><span id="wind-speed">6</span> <span class="text-sm font-normal text-zinc-400">km/h</span></p>
+                        <p class="text-zinc-400 text-sm" id="wind-direction">NW</p>
+                    </div>
+                    <div class="text-center text-xs text-zinc-500">
+                        <p>Gust: <span id="wind-gust">12</span> km/h</p>
+                    </div>
+                </div>
+                <!-- UV Index -->
+                <div class="card-sm">
+                    <p class="text-zinc-400 text-sm mb-2">UV Index</p>
+                    <p class="text-white text-3xl font-semibold mb-2">1 <span class="text-lg">Low</span></p>
+                    <div class="w-full h-2 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full mb-2 relative">
+                        <div class="absolute top-1/2 -translate-y-1/2 left-[10%] w-3 h-3 bg-white rounded-full border-2 border-zinc-900"></div>
+                    </div>
+                    <p class="text-zinc-400 text-sm">No protection needed.</p>
+                </div>
+                <!-- Precipitation -->
+                <div class="card-sm">
+                    <p class="text-zinc-400 text-sm mb-2">Precipitation</p>
+                    <p class="text-white text-3xl font-semibold mb-2">3.9mm</p>
+                    <p class="text-zinc-400 text-sm mb-2">in the last 3 hours</p>
+                    <p class="text-zinc-400 text-sm">No recent precipitation. Conditions are dry.</p>
+                </div>
+
+                <!-- Favorite Cities -->
+                <div class="card-sm">
+                    <h3 class="text-white font-semibold mb-4">Favorite Cities</h3>
+                    <ul id="favorites-list" class="space-y-3">
+                        <!-- Favorites will be populated here -->
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Command Menu Modal -->
+    <div id="command-menu" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex justify-center items-start pt-20">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-xl rounded-lg shadow-2xl overflow-hidden">
+            <div class="relative">
+                <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                <input 
+                    type="text" 
+                    id="command-input"
+                    placeholder="Search for a city or a command..." 
+                    class="w-full bg-zinc-900 text-lg text-zinc-200 placeholder-zinc-500 px-12 py-4 border-b border-zinc-800 focus:outline-none"
+                >
+            </div>
+            <ul class="p-4 max-h-96 overflow-y-auto">
+                <li class="p-3 rounded-lg text-zinc-400 text-sm">No recent searches</li>
+                <!-- Search results would go here -->
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
